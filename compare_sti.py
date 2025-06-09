@@ -19,7 +19,9 @@ import pandas as pd
 import yaml
 
 # Regex pattern for document identifiers within STI columns
-ID_PATTERN = re.compile(r"(?:DID[0-9]{10}|CMD[0-9]{6,}|PM[0-9]{6,}|SETC[0-9]{6,})")
+ID_PATTERN = re.compile(
+    r"(?:DID[0-9]{10}|CMD[0-9]{6,}|PM[0-9]{6,}|" r"SETC[0-9]{6,})"
+)
 
 
 class STIConfig:
@@ -56,7 +58,11 @@ class STIMatrixDefinition:
     header_row: int | None
 
     @classmethod
-    def from_config(cls, config: STIConfig, name: str) -> "STIMatrixDefinition":
+    def from_config(
+        cls,
+        config: STIConfig,
+        name: str,
+    ) -> "STIMatrixDefinition":
         """Create the definition for ``name`` using ``config``."""
 
         raw = config.matrix_definition(name)
@@ -74,7 +80,11 @@ class STIMatrixDefinition:
 class STIMatrix:
     """Represent a STI matrix loaded from an Excel file."""
 
-    def __init__(self, definition: STIMatrixDefinition, fields: Iterable[str]) -> None:
+    def __init__(
+        self,
+        definition: STIMatrixDefinition,
+        fields: Iterable[str],
+    ) -> None:
         self.definition = definition
         self.fields = list(fields)
 
@@ -82,9 +92,17 @@ class STIMatrix:
         """Load the Excel file and normalise its columns."""
 
         file_path = Path(self.definition.file)
-        header = self.definition.header_row if self.definition.header_row is not None else 0
+        header = (
+            self.definition.header_row
+            if self.definition.header_row is not None
+            else 0
+        )
 
-        df = pd.read_excel(file_path, sheet_name=self.definition.sti_sheet, header=header)
+        df = pd.read_excel(
+            file_path,
+            sheet_name=self.definition.sti_sheet,
+            header=header,
+        )
         df.rename(columns=self.definition.column_mapping, inplace=True)
 
         required = ["Reference"] + self.fields
@@ -146,22 +164,41 @@ class STIMatrixComparator:
         return str(a) == str(b)
 
     def compare(self, df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
-        """Return a DataFrame describing the differences between ``df1`` and ``df2``."""
+        """Return a DataFrame describing the differences between ``df1`` and
+        ``df2``."""
 
-        merged = pd.merge(df1, df2, on="Reference", how="outer", suffixes=("_1", "_2"))
-        diffs: list[pd.DataFrame] = []
+        merged = pd.merge(
+            df1,
+            df2,
+            on="Reference",
+            how="outer",
+            suffixes=("_1", "_2"),
+        )
+        diffs: List[pd.DataFrame] = []
+
         for field in self.fields:
             col1 = f"{field}_1"
             col2 = f"{field}_2"
-            mism = merged[~merged.apply(lambda row: self._values_equal(row[col1], row[col2]), axis=1)]
+            mism = merged[
+                ~merged.apply(
+                    lambda row: self._values_equal(row[col1], row[col2]),
+                    axis=1,
+                )
+            ]
             if not mism.empty:
                 subset = mism[["Reference", col1, col2]].copy()
                 subset["field"] = field
-                subset.rename(columns={col1: "value_1", col2: "value_2"}, inplace=True)
-                diffs.append(subset[["Reference", "field", "value_1", "value_2"]])
+                subset.rename(
+                    columns={col1: "value_1", col2: "value_2"}, inplace=True
+                )
+                diffs.append(
+                    subset[["Reference", "field", "value_1", "value_2"]]
+                )
         if diffs:
             return pd.concat(diffs, ignore_index=True)
-        return pd.DataFrame(columns=["Reference", "field", "value_1", "value_2"])
+        return pd.DataFrame(
+            columns=["Reference", "field", "value_1", "value_2"]
+        )
 
 
 def collect_document_ids(df: pd.DataFrame, columns: Iterable[str]) -> Set[str]:
@@ -187,16 +224,29 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Compare two STI matrices defined in sti_config.yaml"
     )
-    parser.add_argument("matrix1", help="Name of the first matrix in the config")
-    parser.add_argument("matrix2", help="Name of the second matrix in the config")
+    parser.add_argument(
+        "matrix1",
+        help="Name of the first matrix in the config",
+    )
+    parser.add_argument(
+        "matrix2",
+        help="Name of the second matrix in the config",
+    )
     parser.add_argument(
         "-c",
         "--config",
         default="sti_config.yaml",
         help="Path to configuration YAML",
     )
-    parser.add_argument("-o", "--output", help="Optional Excel file to store the differences")
-    parser.add_argument("--ppd", help="Optional PPD Excel file to verify documents")
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="Optional Excel file to store the differences",
+    )
+    parser.add_argument(
+        "--ppd",
+        help="Optional PPD Excel file to verify documents",
+    )
 
     args = parser.parse_args()
 
