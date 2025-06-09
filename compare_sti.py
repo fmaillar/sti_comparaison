@@ -28,6 +28,8 @@ class STIConfig:
     """Load and query the ``sti_config.yaml`` configuration."""
 
     def __init__(self, path: str) -> None:
+        """Load ``path`` and store the raw YAML data."""
+
         self.path = path
         with open(path, "r", encoding="utf-8") as f:
             self._data: dict[str, Any] = yaml.safe_load(f)
@@ -85,6 +87,9 @@ class STIMatrix:
         definition: STIMatrixDefinition,
         fields: Iterable[str],
     ) -> None:
+        """Initialise with a matrix definition and fields of interest."""
+
+        # store the matrix definition and ensure ``fields`` is a list
         self.definition = definition
         self.fields = list(fields)
 
@@ -103,8 +108,10 @@ class STIMatrix:
             sheet_name=self.definition.sti_sheet,
             header=header,
         )
+        # normalise column names using the mapping from the configuration
         df.rename(columns=self.definition.column_mapping, inplace=True)
 
+        # ensure all expected columns exist
         required = ["Reference"] + self.fields
         for col in required:
             try:
@@ -114,7 +121,7 @@ class STIMatrix:
 
         df = df[required]
 
-        # Extract document identifiers from specific columns
+        # extract document identifiers from dedicated columns
         id_columns = {"MOP_design", "MOP_test", "CAF_Comments"}
         for col in id_columns.intersection(df.columns):
             df[col] = (
@@ -131,6 +138,8 @@ class PPDChecker:
     """Load a PPD Excel file and query its document identifiers."""
 
     def __init__(self, path: str, column: str = "Référence ALSTOM") -> None:
+        """Store the path to the file and the column containing IDs."""
+
         self.path = Path(path)
         self.column = column
 
@@ -141,6 +150,7 @@ class PPDChecker:
         try:
             series = df[self.column]
         except KeyError:
+            # provide a clear error if the column is missing
             raise KeyError(f"Column '{self.column}' not found in {self.path}")
         return set(series.dropna().astype(str))
 
@@ -149,6 +159,8 @@ class STIMatrixComparator:
     """Compare two :class:`STIMatrix` objects."""
 
     def __init__(self, fields: Iterable[str]) -> None:
+        """Initialise with the list of fields that should be compared."""
+
         self.fields = list(fields)
 
     @staticmethod
@@ -156,6 +168,7 @@ class STIMatrixComparator:
         """Return True if ``a`` and ``b`` should be considered equal."""
 
         if isinstance(a, set) or isinstance(b, set):
+            # handle comparison of sets of document identifiers
             a_set = a if isinstance(a, set) else set()
             b_set = b if isinstance(b, set) else set()
             return a_set == b_set
@@ -174,11 +187,13 @@ class STIMatrixComparator:
             how="outer",
             suffixes=("_1", "_2"),
         )
+        # container for all mismatch rows
         diffs: List[pd.DataFrame] = []
 
         for field in self.fields:
             col1 = f"{field}_1"
             col2 = f"{field}_2"
+            # rows where the two columns differ
             mism = merged[
                 ~merged.apply(
                     lambda row: self._values_equal(row[col1], row[col2]),
@@ -207,6 +222,7 @@ def collect_document_ids(df: pd.DataFrame, columns: Iterable[str]) -> Set[str]:
     ids: Set[str] = set()
     for col in columns:
         if col in df.columns:
+            # gather all strings stored in sets within the given column
             ids.update(
                 {
                     id_str
@@ -248,14 +264,17 @@ def main() -> None:
         help="Optional PPD Excel file to verify documents",
     )
 
+    # parse command line arguments
     args = parser.parse_args()
 
+    # load configuration and extract fields to compare
     config = STIConfig(args.config)
     fields = config.fields_to_compare
 
     matrix1_def = STIMatrixDefinition.from_config(config, args.matrix1)
     matrix2_def = STIMatrixDefinition.from_config(config, args.matrix2)
 
+    # load both matrices using the extracted definitions
     df1 = STIMatrix(matrix1_def, fields).load()
     df2 = STIMatrix(matrix2_def, fields).load()
 
@@ -267,16 +286,19 @@ def main() -> None:
     else:
         print(diffs.to_string(index=False))
         if args.output:
+            # write results to an optional Excel file
             diffs.to_excel(args.output, index=False)
             print(f"Differences written to {args.output}")
 
     if args.ppd:
+        # optionally verify that all MOP documents exist in the PPD file
         checker = PPDChecker(args.ppd)
         ppd_ids = checker.load_ids()
         all_ids = collect_document_ids(
             pd.concat([df1, df2], ignore_index=True),
             ["MOP_design", "MOP_test", "CAF_Comments"],
         )
+        # any referenced IDs not found in the PPD are reported
         missing = sorted(all_ids - ppd_ids)
         if missing:
             print("Missing in PPD:", ", ".join(missing))
