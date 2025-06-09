@@ -1,0 +1,362 @@
+[
+  {
+    "topic": "Pythonic Thinking and Zen of Python",
+    "chapter": "Introduction",
+    "core_principle": "Embrace readability, simplicity, and explicitness following The Zen of Python.",
+    "python_example": "import this",
+    "anti_pattern": "Writing complex, unreadable one-liners or ambiguous code.",
+    "gpt_application": "Encourage explicit and readable code over clever but obscure constructs."
+  },
+  {
+    "topic": "EAFP vs LBYL",
+    "chapter": "Error Handling",
+    "core_principle": "Prefer try-except (EAFP) over pre-checks (LBYL) for cleaner code.",
+    "python_example": "try:\n    value = d[key]\nexcept KeyError:\n    value = default",
+    "anti_pattern": "if key in d:\n    value = d[key]\nelse:\n    value = default",
+    "gpt_application": "Suggest try-except blocks for dictionary access to avoid redundant checks."
+  },
+  {
+    "topic": "List Comprehensions",
+    "chapter": "Data Structures",
+    "core_principle": "Use comprehensions instead of loops with append for building lists.",
+    "python_example": "[x*x for x in range(10) if x % 2 == 0]",
+    "anti_pattern": "result = []\nfor x in range(10):\n    if x % 2 == 0:\n        result.append(x*x)",
+    "gpt_application": "Recommend list comprehensions for clearer and more concise list construction."
+  },
+  {
+    "topic": "Sets and Dicts Usage",
+    "chapter": "Data Structures",
+    "core_principle": "Use sets for uniqueness and dicts for key-value mapping with efficient lookup.",
+    "python_example": "unique_items = set([1,2,2,3])\nmapping = {'a': 1, 'b': 2}",
+    "anti_pattern": "Using lists for membership tests or key-value lookups.",
+    "gpt_application": "Encourage use of sets and dicts for performance in lookups."
+  },
+  {
+    "topic": "NamedTuple vs Dataclasses",
+    "chapter": "Data Structures",
+    "core_principle": "Use NamedTuple for immutable records, dataclasses for mutable data containers.",
+    "python_example": "@dataclass\nclass Point:\n    x: int\n    y: int",
+    "anti_pattern": "Using regular classes with manual __init__ and __repr__ for simple data.",
+    "gpt_application": "Recommend NamedTuple or @dataclass to reduce boilerplate."
+  },
+  {
+    "topic": "Iterators and Protocols",
+    "chapter": "Iterators and Generators",
+    "core_principle": "Implement __iter__ and __next__ to create custom iterators.",
+    "python_example": "class Counter:\n    def __iter__(self):\n        self.count = 0\n        return self\n    def __next__(self):\n        self.count += 1\n        if self.count > 5:\n            raise StopIteration\n        return self.count",
+    "anti_pattern": "Manually managing indices and loops outside iterator protocol.",
+    "gpt_application": "Encourage defining iterators with __iter__ and __next__."
+  },
+  {
+    "topic": "Generators and Yield",
+    "chapter": "Iterators and Generators",
+    "core_principle": "Use yield to create generators for lazy evaluation.",
+    "python_example": "def count_up_to(max):\n    count = 1\n    while count <= max:\n        yield count\n        count += 1",
+    "anti_pattern": "Building large lists in memory instead of yielding items.",
+    "gpt_application": "Suggest generators to improve memory efficiency."
+  },
+  {
+    "topic": "Yield From",
+    "chapter": "Iterators and Generators",
+    "core_principle": "Use yield from to delegate generator operations to subgenerators.",
+    "python_example": "def generator():\n    yield from subgenerator()",
+    "anti_pattern": "Manual loops to yield each item from a subgenerator.",
+    "gpt_application": "Encourage yield from for clearer delegation."
+  },
+  {
+    "topic": "Generator Expressions",
+    "chapter": "Iterators and Generators",
+    "core_principle": "Use generator expressions for concise lazy iteration.",
+    "python_example": "sum(x*x for x in range(10))",
+    "anti_pattern": "Creating full lists just to iterate once.",
+    "gpt_application": "Suggest generator expressions for memory efficiency."
+  },
+  {
+    "topic": "Context Managers and With",
+    "chapter": "Context Managers",
+    "core_principle": "Use with statement and context managers to manage resources safely.",
+    "python_example": "with open('file.txt') as f:\n    data = f.read()",
+    "anti_pattern": "Manual open and close risking resource leaks.",
+    "gpt_application": "Recommend context managers for resource safety."
+  },
+  {
+    "topic": "Creating Context Managers",
+    "chapter": "Context Managers",
+    "core_principle": "Define __enter__ and __exit__ methods for custom context managers.",
+    "python_example": "class Managed:\n    def __enter__(self):\n        # setup\n        return self\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        # cleanup",
+    "anti_pattern": "Manual try/finally for resource management.",
+    "gpt_application": "Suggest defining __enter__/__exit__ for cleaner resource handling."
+  },
+  {
+    "topic": "Contextlib Utilities",
+    "chapter": "Context Managers",
+    "core_principle": "Use contextlib.contextmanager decorator for simple context managers.",
+    "python_example": "@contextlib.contextmanager\ndef managed():\n    # setup\n    yield\n    # cleanup",
+    "anti_pattern": "Verbose class-based context managers for simple cases.",
+    "gpt_application": "Encourage contextlib for simpler context managers."
+  },
+  {
+    "topic": "Functions as First-class Objects",
+    "chapter": "Functions and Decorators",
+    "core_principle": "Treat functions as first-class citizens that can be passed and returned.",
+    "python_example": "def apply(func, value):\n    return func(value)",
+    "anti_pattern": "Using global state or non-modular code.",
+    "gpt_application": "Promote passing functions as arguments for modularity."
+  },
+  {
+    "topic": "Closures and Nested Functions",
+    "chapter": "Functions and Decorators",
+    "core_principle": "Use nested functions and closures to capture state.",
+    "python_example": "def outer(x):\n    def inner(y):\n        return x + y\n    return inner",
+    "anti_pattern": "Using global variables to maintain state.",
+    "gpt_application": "Suggest closures for encapsulating state."
+  },
+  {
+    "topic": "Decorators",
+    "chapter": "Functions and Decorators",
+    "core_principle": "Use decorators to add behavior to functions or methods.",
+    "python_example": "@decorator\ndef func():\n    pass",
+    "anti_pattern": "Manual code repetition for cross-cutting concerns.",
+    "gpt_application": "Recommend decorators for reusable function modifications."
+  },
+  {
+    "topic": "Decorators with Arguments",
+    "chapter": "Functions and Decorators",
+    "core_principle": "Define decorators that accept arguments.",
+    "python_example": "def decorator(arg):\n    def wrapper(func):\n        def inner(*args, **kwargs):\n            # do something\n            return func(*args, **kwargs)\n        return inner\n    return wrapper",
+    "anti_pattern": "Hardcoding decorator behavior without parameters.",
+    "gpt_application": "Encourage parameterized decorators for flexibility."
+  },
+  {
+    "topic": "functools Utilities",
+    "chapter": "Functions and Decorators",
+    "core_principle": "Use functools utilities like partial, wraps, lru_cache.",
+    "python_example": "from functools import lru_cache\n@lru_cache\ndef fib(n):\n    if n < 2:\n        return n\n    return fib(n-1) + fib(n-2)",
+    "anti_pattern": "Reimplementing caching or partial function application.",
+    "gpt_application": "Promote functools for common function utilities."
+  },
+  {
+    "topic": "Abstract Base Classes and Protocols",
+    "chapter": "OOP",
+    "core_principle": "Use abc module to define abstract base classes and protocols.",
+    "python_example": "from abc import ABC, abstractmethod\nclass Shape(ABC):\n    @abstractmethod\n    def area(self):\n        pass",
+    "anti_pattern": "Using informal interface definitions without enforcement.",
+    "gpt_application": "Suggest using ABC for clear interfaces."
+  },
+  {
+    "topic": "Operator Overloading",
+    "chapter": "OOP",
+    "core_principle": "Override special methods to customize operators.",
+    "python_example": "def __add__(self, other):\n    return Vector(self.x + other.x, self.y + other.y)",
+    "anti_pattern": "Using verbose method calls instead of operators.",
+    "gpt_application": "Recommend operator overloading for natural APIs."
+  },
+  {
+    "topic": "Properties and Descriptors",
+    "chapter": "OOP",
+    "core_principle": "Use @property and descriptors for controlled attribute access.",
+    "python_example": "@property\ndef temperature(self):\n    return self._temp",
+    "anti_pattern": "Direct attribute access without control.",
+    "gpt_application": "Advise use of properties to encapsulate attribute logic."
+  },
+  {
+    "topic": "Multiple Inheritance and Mixins",
+    "chapter": "OOP",
+    "core_principle": "Use mixins for reusable behavior in multiple inheritance.",
+    "python_example": "class JSONMixin:\n    def to_json(self):\n        return json.dumps(self.__dict__)",
+    "anti_pattern": "Duplicating code across classes instead of mixins.",
+    "gpt_application": "Suggest mixins for reusable functionality."
+  },
+  {
+    "topic": "Metaclasses",
+    "chapter": "OOP",
+    "core_principle": "Customize class creation with metaclasses.",
+    "python_example": "class Meta(type):\n    def __new__(cls, name, bases, dct):\n        # customize class\n        return super().__new__(cls, name, bases, dct)",
+    "anti_pattern": "Using complex class factories without metaclasses.",
+    "gpt_application": "Use metaclasses to control class behavior at creation."
+  },
+  {
+    "topic": "Asyncio Basics",
+    "chapter": "Async",
+    "core_principle": "Use async def and await to write asynchronous code.",
+    "python_example": "async def main():\n    await asyncio.sleep(1)",
+    "anti_pattern": "Blocking calls in async code.",
+    "gpt_application": "Recommend async/await for I/O bound concurrency."
+  },
+  {
+    "topic": "Event Loop and Tasks",
+    "chapter": "Async",
+    "core_principle": "Manage asynchronous tasks and event loop properly.",
+    "python_example": "asyncio.create_task(coro())",
+    "anti_pattern": "Improper task management causing concurrency issues.",
+    "gpt_application": "Advise proper use of asyncio tasks."
+  },
+  {
+    "topic": "Function Annotations and Typing",
+    "chapter": "Typing",
+    "core_principle": "Use function annotations for clearer code and static analysis.",
+    "python_example": "def add(x: int, y: int) -> int:\n    return x + y",
+    "anti_pattern": "Lack of type hints in large codebases.",
+    "gpt_application": "Promote typing for maintainability."
+  },
+  {
+    "topic": "Slots for Memory Optimization",
+    "chapter": "Performance",
+    "core_principle": "Use __slots__ to reduce memory footprint of instances.",
+    "python_example": "class Point:\n    __slots__ = ['x', 'y']",
+    "anti_pattern": "Dynamic __dict__ for many instances causing overhead.",
+    "gpt_application": "Suggest __slots__ for classes with many instances."
+  },
+  {
+    "topic": "Memoization",
+    "chapter": "Performance",
+    "core_principle": "Cache expensive function results using memoization.",
+    "python_example": "@lru_cache\ndef fib(n):\n    if n < 2:\n        return n\n    return fib(n-1) + fib(n-2)",
+    "anti_pattern": "Repeated expensive computations without caching.",
+    "gpt_application": "Advise caching for expensive recursive functions."
+  },
+  {
+    "topic": "Introspection",
+    "chapter": "Advanced",
+    "core_principle": "Use inspect and built-in functions for introspection.",
+    "python_example": "import inspect\ninspect.getmembers(obj)",
+    "anti_pattern": "Hardcoding assumptions about objects.",
+    "gpt_application": "Promote introspection for dynamic behavior."
+  },
+  {
+    "topic": "Code Generation",
+    "chapter": "Advanced",
+    "core_principle": "Generate code dynamically with exec or eval cautiously.",
+    "python_example": "exec('print(2 + 2)')",
+    "anti_pattern": "Unsafe or overuse of dynamic code.",
+    "gpt_application": "Warn on unsafe eval/exec usage."
+  },
+  {
+    "topic": "Packaging and Modules",
+    "chapter": "Modules",
+    "core_principle": "Organize code into packages and modules for clarity.",
+    "python_example": "from mypackage import module",
+    "anti_pattern": "Flat scripts without modularization.",
+    "gpt_application": "Suggest modular design for scalability."
+  },
+  {
+    "topic": "Virtual Environments",
+    "chapter": "Modules",
+    "core_principle": "Use virtualenv or venv to manage dependencies per project.",
+    "python_example": "python -m venv env",
+    "anti_pattern": "Global package installs causing conflicts.",
+    "gpt_application": "Encourage isolated environments."
+  },
+  {
+    "topic": "Unit Testing",
+    "chapter": "Testing",
+    "core_principle": "Write unit tests using unittest or pytest.",
+    "python_example": "def test_add():\n    assert add(2, 3) == 5",
+    "anti_pattern": "No automated tests.",
+    "gpt_application": "Promote test-driven development."
+  },
+  {
+    "topic": "Type Checking",
+    "chapter": "Typing",
+    "core_principle": "Use mypy or similar tools for static type checking.",
+    "python_example": "mypy myscript.py",
+    "anti_pattern": "Ignoring type errors.",
+    "gpt_application": "Recommend static analysis for robustness."
+  },
+  {
+    "topic": "Documentation",
+    "chapter": "Documentation",
+    "core_principle": "Use docstrings and tools like Sphinx for documentation.",
+    "python_example": "\"\"\"Calculate factorial.\"\"\"",
+    "anti_pattern": "Undocumented functions or modules.",
+    "gpt_application": "Advise clear, standardized documentation."
+  },
+  {
+    "topic": "Lazy Evaluation",
+    "chapter": "Iterators and Generators",
+    "core_principle": "Defer computation using lazy iterators and generators.",
+    "python_example": "sum(x*x for x in range(10))",
+    "anti_pattern": "Creating large intermediate lists unnecessarily.",
+    "gpt_application": "Suggest lazy evaluation for performance."
+  },
+  {
+    "topic": "Iterable Unpacking",
+    "chapter": "Data Structures",
+    "core_principle": "Use unpacking syntax for clarity and convenience.",
+    "python_example": "a, b, *rest = [1, 2, 3, 4]",
+    "anti_pattern": "Manual indexing for multiple assignments.",
+    "gpt_application": "Encourage iterable unpacking."
+  },
+  {
+    "topic": "Coroutine Communication",
+    "chapter": "Async",
+    "core_principle": "Use send() to communicate with coroutines.",
+    "python_example": "def coroutine():\n    value = yield\n    print(value)",
+    "anti_pattern": "Using global state for communication.",
+    "gpt_application": "Advise coroutine communication via send()."
+  },
+  {
+    "topic": "Function Annotations",
+    "chapter": "Typing",
+    "core_principle": "Annotate function arguments and return types.",
+    "python_example": "def greet(name: str) -> str:\n    return f'Hello {name}'",
+    "anti_pattern": "No type annotations in public APIs.",
+    "gpt_application": "Recommend annotations for clarity."
+  },
+  {
+    "topic": "Function Partial Application",
+    "chapter": "Functions and Decorators",
+    "core_principle": "Use functools.partial to fix some function arguments.",
+    "python_example": "from functools import partial\nadd_five = partial(add, 5)",
+    "anti_pattern": "Reimplementing partial application manually.",
+    "gpt_application": "Suggest functools.partial for argument fixing."
+  },
+  {
+    "topic": "Pythonic Thinking and Zen of Python",
+    "chapter": "Introduction",
+    "core_principle": "Embrace readability, simplicity, and explicitness following The Zen of Python.",
+    "python_example": "import this",
+    "anti_pattern": "Writing complex, unreadable one-liners or ambiguous code.",
+    "gpt_application": "Encourage explicit and readable code over clever but obscure constructs."
+  },
+  {
+    "topic": "Pythonic Thinking and Zen of Python",
+    "chapter": "Introduction",
+    "core_principle": "Embrace readability, simplicity, and explicitness following The Zen of Python.",
+    "python_example": "import this",
+    "anti_pattern": "Writing complex, unreadable one-liners or ambiguous code.",
+    "gpt_application": "Encourage explicit and readable code over clever but obscure constructs."
+  },
+  {
+    "topic": "Pythonic Thinking and Zen of Python",
+    "chapter": "Introduction",
+    "core_principle": "Embrace readability, simplicity, and explicitness following The Zen of Python.",
+    "python_example": "import this",
+    "anti_pattern": "Writing complex, unreadable one-liners or ambiguous code.",
+    "gpt_application": "Encourage explicit and readable code over clever but obscure constructs."
+  },
+  {
+    "topic": "Pythonic Thinking and Zen of Python",
+    "chapter": "Introduction",
+    "core_principle": "Embrace readability, simplicity, and explicitness following The Zen of Python.",
+    "python_example": "import this",
+    "anti_pattern": "Writing complex, unreadable one-liners or ambiguous code.",
+    "gpt_application": "Encourage explicit and readable code over clever but obscure constructs."
+  },
+  {
+    "topic": "Pythonic Thinking and Zen of Python",
+    "chapter": "Introduction",
+    "core_principle": "Embrace readability, simplicity, and explicitness following The Zen of Python.",
+    "python_example": "import this",
+    "anti_pattern": "Writing complex, unreadable one-liners or ambiguous code.",
+    "gpt_application": "Encourage explicit and readable code over clever but obscure constructs."
+  },
+  {
+    "topic": "Pythonic Thinking and Zen of Python",
+    "chapter": "Introduction",
+    "core_principle": "Embrace readability, simplicity, and explicitness following The Zen of Python.",
+    "python_example": "import this",
+    "anti_pattern": "Writing complex, unreadable one-liners or ambiguous code.",
+    "gpt_application": "Encourage explicit and readable code over clever but obscure constructs."
+  }
+]

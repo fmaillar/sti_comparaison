@@ -1,0 +1,128 @@
+[
+  {
+    "pattern": "Factory Method",
+    "category": "Creational",
+    "description": "Defines an interface for creating an object, but lets subclasses alter the type of objects that will be created.",
+    "python_use_case": "Use when a superclass delegates the instantiation process to its subclasses. Encapsulate object creation."
+  },
+  {
+    "pattern": "Abstract Factory",
+    "category": "Creational",
+    "description": "Provides an interface for creating families of related or dependent objects without specifying their concrete classes.",
+    "python_use_case": "Use when you need to ensure that objects from the same family are used together."
+  },
+  {
+    "pattern": "Builder",
+    "category": "Creational",
+    "description": "Separates the construction of a complex object from its representation.",
+    "python_use_case": "Use when constructing an object requires multiple steps or configurations."
+  },
+  {
+    "pattern": "Singleton",
+    "category": "Creational",
+    "description": "Ensures a class has only one instance and provides a global point of access to it.",
+    "python_use_case": "Use when exactly one object is needed to coordinate actions across a system."
+  },
+  {
+    "pattern": "Prototype",
+    "category": "Creational",
+    "description": "Lets you copy existing objects without making your code dependent on their classes.",
+    "python_use_case": "Use when object creation is expensive or complex, and cloning is more efficient."
+  },
+  {
+    "pattern": "Adapter",
+    "category": "Structural",
+    "description": "Allows incompatible interfaces to work together by converting one interface into another.",
+    "python_use_case": "Use when you need to integrate a class into a system with an incompatible interface."
+  },
+  {
+    "pattern": "Decorator",
+    "category": "Structural",
+    "description": "Adds responsibilities to objects dynamically without changing their code.",
+    "python_use_case": "Use Python\u2019s @decorator syntax to wrap functions or methods for logging, validation, etc."
+  },
+  {
+    "pattern": "Facade",
+    "category": "Structural",
+    "description": "Provides a simplified interface to a complex subsystem.",
+    "python_use_case": "Use when you need to simplify access to a group of complex subsystems."
+  },
+  {
+    "pattern": "Proxy",
+    "category": "Structural",
+    "description": "Provides a surrogate or placeholder for another object to control access to it.",
+    "python_use_case": "Use for lazy loading, access control, logging, or wrapping expensive resources."
+  },
+  {
+    "pattern": "Composite",
+    "category": "Structural",
+    "description": "Composes objects into tree structures to represent part-whole hierarchies.",
+    "python_use_case": "Use when individual objects and compositions need to be treated uniformly."
+  },
+  {
+    "pattern": "Bridge",
+    "category": "Structural",
+    "description": "Decouples an abstraction from its implementation so that the two can vary independently.",
+    "python_use_case": "Use when you want to separate interface and implementation across hierarchies."
+  },
+  {
+    "pattern": "Strategy",
+    "category": "Behavioral",
+    "description": "Defines a family of algorithms, encapsulates each one, and makes them interchangeable.",
+    "python_use_case": "Use when you have multiple branches of logic that select different behaviors."
+  },
+  {
+    "pattern": "Observer",
+    "category": "Behavioral",
+    "description": "Defines a one-to-many dependency between objects so that when one changes state, all dependents are notified.",
+    "python_use_case": "Use to implement publish/subscribe systems or reactive UIs."
+  },
+  {
+    "pattern": "Command",
+    "category": "Behavioral",
+    "description": "Encapsulates a request as an object, thereby allowing for parameterization and queuing of requests.",
+    "python_use_case": "Use for undo/redo functionality or for queuing operations."
+  },
+  {
+    "pattern": "State",
+    "category": "Behavioral",
+    "description": "Allows an object to alter its behavior when its internal state changes.",
+    "python_use_case": "Use for objects whose behavior depends on internal state and must change at runtime."
+  },
+  {
+    "pattern": "Template Method",
+    "category": "Behavioral",
+    "description": "Defines the skeleton of an algorithm in the superclass but lets subclasses override specific steps.",
+    "python_use_case": "Use when multiple classes share similar algorithms but differ in some steps."
+  },
+  {
+    "pattern": "Visitor",
+    "category": "Behavioral",
+    "description": "Separates an algorithm from the object structure on which it operates.",
+    "python_use_case": "Use when new operations need to be added to object structures without modifying them."
+  },
+  {
+    "pattern": "Chain of Responsibility",
+    "category": "Behavioral",
+    "description": "Passes a request along a chain of handlers until one of them handles it.",
+    "python_use_case": "Use for processing workflows, validation chains, or middleware-like pipelines."
+  },
+  {
+    "pattern": "Iterator",
+    "category": "Behavioral",
+    "description": "Provides a way to access elements of a collection sequentially without exposing the underlying structure.",
+    "python_use_case": "Use to abstract iteration logic and encapsulate traversal algorithms."
+  },
+  {
+    "pattern": "Mediator",
+    "category": "Behavioral",
+    "description": "Defines an object that encapsulates how a set of objects interact, promoting loose coupling.",
+    "python_use_case": "Use to reduce complex communication logic between many objects."
+  },
+  {
+    "pattern": "Memento",
+    "category": "Behavioral",
+    "description": "Captures and restores an object\u2019s internal state without violating encapsulation.",
+    "python_use_case": "Use for implementing undo mechanisms or checkpoints."
+  }
+]
