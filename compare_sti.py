@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Set
+from typing import Any, Iterable, Set
 
 import re
 
@@ -30,15 +30,15 @@ class STIConfig:
     def __init__(self, path: str) -> None:
         self.path = path
         with open(path, "r", encoding="utf-8") as f:
-            self._data: Dict[str, Any] = yaml.safe_load(f)
+            self._data: dict[str, Any] = yaml.safe_load(f)
 
     @property
-    def fields_to_compare(self) -> List[str]:
+    def fields_to_compare(self) -> list[str]:
         """Return the list of fields to compare between matrices."""
 
         return list(self._data.get("fields_to_compare", []))
 
-    def matrix_definition(self, name: str) -> Dict[str, Any]:
+    def matrix_definition(self, name: str) -> dict[str, Any]:
         """Return the raw configuration dictionary for a matrix."""
 
         for matrix in self._data.get("matrices", []):
@@ -54,7 +54,7 @@ class STIMatrixDefinition:
     name: str
     file: str
     sti_sheet: str
-    column_mapping: Dict[str, str]
+    column_mapping: dict[str, str]
     header_row: int | None
 
     @classmethod
@@ -107,7 +107,9 @@ class STIMatrix:
 
         required = ["Reference"] + self.fields
         for col in required:
-            if col not in df.columns:
+            try:
+                df[col]
+            except KeyError:
                 df[col] = pd.NA
 
         df = df[required]
@@ -136,9 +138,11 @@ class PPDChecker:
         """Return the set of IDs present in the PPD file."""
 
         df = pd.read_excel(self.path)
-        if self.column not in df.columns:
+        try:
+            series = df[self.column]
+        except KeyError:
             raise KeyError(f"Column '{self.column}' not found in {self.path}")
-        return set(df[self.column].dropna().astype(str))
+        return set(series.dropna().astype(str))
 
 
 class STIMatrixComparator:
@@ -171,6 +175,7 @@ class STIMatrixComparator:
             suffixes=("_1", "_2"),
         )
         diffs: List[pd.DataFrame] = []
+
         for field in self.fields:
             col1 = f"{field}_1"
             col2 = f"{field}_2"
