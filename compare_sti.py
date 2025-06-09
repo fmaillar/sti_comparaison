@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Set
+from typing import Any, Iterable, Set
 
 import re
 
@@ -28,15 +28,15 @@ class STIConfig:
     def __init__(self, path: str) -> None:
         self.path = path
         with open(path, "r", encoding="utf-8") as f:
-            self._data: Dict[str, Any] = yaml.safe_load(f)
+            self._data: dict[str, Any] = yaml.safe_load(f)
 
     @property
-    def fields_to_compare(self) -> List[str]:
+    def fields_to_compare(self) -> list[str]:
         """Return the list of fields to compare between matrices."""
 
         return list(self._data.get("fields_to_compare", []))
 
-    def matrix_definition(self, name: str) -> Dict[str, Any]:
+    def matrix_definition(self, name: str) -> dict[str, Any]:
         """Return the raw configuration dictionary for a matrix."""
 
         for matrix in self._data.get("matrices", []):
@@ -52,7 +52,7 @@ class STIMatrixDefinition:
     name: str
     file: str
     sti_sheet: str
-    column_mapping: Dict[str, str]
+    column_mapping: dict[str, str]
     header_row: int | None
 
     @classmethod
@@ -145,7 +145,7 @@ class STIMatrixComparator:
         """Return a DataFrame describing the differences between ``df1`` and ``df2``."""
 
         merged = pd.merge(df1, df2, on="Reference", how="outer", suffixes=("_1", "_2"))
-        diffs: List[pd.DataFrame] = []
+        diffs: list[pd.DataFrame] = []
         for field in self.fields:
             col1 = f"{field}_1"
             col2 = f"{field}_2"
