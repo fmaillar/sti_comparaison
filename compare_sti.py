@@ -89,7 +89,9 @@ class STIMatrix:
 
         required = ["Reference"] + self.fields
         for col in required:
-            if col not in df.columns:
+            try:
+                df[col]
+            except KeyError:
                 df[col] = pd.NA
 
         df = df[required]
@@ -118,9 +120,11 @@ class PPDChecker:
         """Return the set of IDs present in the PPD file."""
 
         df = pd.read_excel(self.path)
-        if self.column not in df.columns:
+        try:
+            series = df[self.column]
+        except KeyError:
             raise KeyError(f"Column '{self.column}' not found in {self.path}")
-        return set(df[self.column].dropna().astype(str))
+        return set(series.dropna().astype(str))
 
 
 class STIMatrixComparator:
