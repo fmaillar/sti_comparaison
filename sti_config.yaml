@@ -1,0 +1,181 @@
+---
+project: Grd_EST
+version: 1.2
+date_modification: 2025-06-03
+auteur: Florian Maillard
+fields_to_compare:
+  - Requirement
+  - MOP_design
+  - MOP_test
+  - CAF_Comments
+  - Applicability
+matrices:
+  - name: GE_LocPas
+    file: GE/EC_9430_0008_9_LocPas.xlsx
+    project_type: GE
+    sheets:
+      Cover page:
+        header_row: null
+      Executive summary:
+        header_row: null
+      2014_1302_CE_TSI_LOC&PAS:
+        header_row: 2
+      ATSA(Assessed documents):
+        header_row: null
+      History:
+        header_row: null
+    sti_sheet: 2014_1302_CE_TSI_LOC&PAS
+    column_mapping:
+      ReqID_S: Reference
+      "2014_1302_CE_TSI_LOC&PAS": Requirement
+      "MOP Design Phase": MOP_design
+      "MOP Test Phase": MOP_test
+      "Comments ATSA with date": CAF_Comments
+  - name: GE_PMR
+    file: GE/EC_9430_0009_7_PMR.xlsx
+    project_type: GE
+    sheets:
+      Cover page:
+        header_row: null
+      Executive summary:
+        header_row: null
+      2014_1300_CE_TSI_PRM:
+        header_row: 2
+      ATSA documents:
+        header_row: null
+      History:
+        header_row: null
+    sti_sheet: 2014_1300_CE_TSI_PRM
+    column_mapping:
+      ReqID_S: Reference
+      "2014_1300_CE_TSI_PRM": Requirement
+      "MOP Design Phase": MOP_design
+      "MOP Test Phase": MOP_test
+      "Comments ATSA with date": CAF_Comments
+  - name: GE_Bruit
+    file: GE/EC_9430_0010_5_Bruit.xlsx
+    project_type: GE
+    sheets:
+      Cover page:
+        header_row: null
+      Executive summary:
+        header_row: null
+      2014_1304_CE_TSI_NOI:
+        header_row: 2
+      ATSA(Assessed documents):
+        header_row: null
+    sti_sheet: 2014_1304_CE_TSI_NOI
+    column_mapping:
+      ReqID_S: Reference
+      "2014_1304_CE_TSI_NOI": Requirement
+      "MOP Design Phase": MOP_design
+      "MOP Test Phase": MOP_test
+      "Comments ATSA with date": CAF_Comments
+  - name: GE_Tunnels
+    file: GE/EC_9430_0016_2_Tunnels.xlsx
+    project_type: GE
+    sheets:
+      Page de garde:
+        header_row: null
+      Executive summary:
+        header_row: null
+      2014_1303_CE_TSI_TUNNELS:
+        header_row: 1
+      Catégorie MR:
+        header_row: null
+    sti_sheet: 2014_1303_CE_TSI_TUNNELS
+    column_mapping:
+      "ID du requis": Reference
+      # yamllint disable-line rule:line-length
+      "Texte du requis (Annexes STI TUNNELS - 2014_1303_CE_TSI_TUNNELS )": Requirement
+      "Commentaires ATSA": CAF_Comments
+      "Type de données (Requis/Information)": isRequirement
+      "Applicable / Non applicable": Applicability
+  - name: H2_LocPas
+    # yamllint disable-line rule:line-length
+    file: H2/EC_9430_0050_01_H2_STI_LocPas_1302_2014_M4C2_20252305.xlsx
+    project_type: H2
+    sheets:
+      Cover page:
+        header_row: null
+      2014_1302_CE_TSI_LOC&PAS M4C2:
+        header_row: 1
+      KPI_Avancement:
+        header_row: null
+      Liste documentaire:
+        header_row: null
+      Conformite:
+        header_row: null
+    sti_sheet: 2014_1302_CE_TSI_LOC&PAS M4C2
+    column_mapping:
+      "ID du requis": Reference
+      "Contenu STI": Requirement
+      "Type de donnée": isRequirement
+      "Preuves de conception": MOP_design
+      "Preuves de test": MOP_test
+      "CAF - Commentaires": CAF_Comments
+  - name: H2_PMR
+    # yamllint disable-line rule:line-length
+    file: H2/EC_9430_0051_01.1_H2_STI_PMR_1300_2014_M1_25112024.xlsx
+    project_type: H2
+    sheets:
+      Cover page:
+        header_row: null
+      2014_1300_CE_TSI_PRM M1:
+        header_row: 1
+      KPI_Avancement:
+        header_row: null
+      Liste documentaire:
+        header_row: null
+      Conformite:
+        header_row: null
+    sti_sheet: 2014_1300_CE_TSI_PRM M1
+    column_mapping:
+      "ID du requis": Reference
+      "Contenu STI": Requirement
+      "Type de donnée": isRequirement
+      "Preuves de conception": MOP_design
+      "Preuves de test": MOP_test
+      "CAF - Commentaires": CAF_Comments
+  - name: H2_Tunnels
+    file: H2/EC_9430_0051_01_H2_STI_Tunnels_1300_2014_M1_06062024.xlsx
+    project_type: H2
+    sheets:
+      Page de garde:
+        header_row: null
+      2014_1303_CE_TSI_TUNNELS:
+        header_row: 1
+      KPI_Avancement:
+        header_row: null
+      Liste Documentaire:
+        header_row: null
+      Conformite:
+        header_row: null
+    sti_sheet: 2014_1303_CE_TSI_TUNNELS
+    column_mapping:
+      # yamllint disable-line rule:line-length
+      "Texte du requis (Annexes STI TUNNELS - 2014_1303_CE_TSI_TUNNELS ), version M2": Requirement
+      "ID du requis": Reference
+      "Comments CAF  with date": CAF_Comments
+  - name: H2_Bruit
+    file: H2/EC_9430_0052_01.1_H2_STI_Bruit_1304_2014_M1_25112024.xlsx
+    project_type: H2
+    sheets:
+      Cover page:
+        header_row: null
+      2014_1304_CE_TSI_NOI_M1:
+        header_row: 1
+      KPI_Avancement:
+        header_row: null
+      Conformite:
+        header_row: null
+      Liste Documentaire:
+        header_row: null
+    sti_sheet: 2014_1304_CE_TSI_NOI_M1
+    column_mapping:
+      "ID du requis": Reference
+      "Contenu STI": Requirement
+      "Type de donnée": isRequirement
+      "Preuves de conception": MOP_design
+      "Preuves de test": MOP_test
+      "CAF - Commentaires": CAF_Comments
