@@ -111,19 +111,25 @@ class STIMatrix:  # pylint: disable=too-few-public-methods
         # normalise column names using the mapping from the configuration
         df.rename(columns=self.definition.column_mapping, inplace=True)
 
-        # ensure all expected columns exist
+        # ensure all expected columns exist and create raw columns for ID fields
         required = ["Reference"] + self.fields
+        id_columns = {"MOP_design", "MOP_test", "CAF_Comments"}
+        raw_cols: list[str] = []
         for col in required:
-            try:
-                df[col]
-            except KeyError:
+            if col not in df.columns:
                 df[col] = pd.NA
+            if col in id_columns:
+                raw_col = f"{col}_raw"
+                raw_cols.append(raw_col)
+                if raw_col not in df.columns:
+                    df[raw_col] = pd.NA
 
-        df = df[required]
+        df = df[required + raw_cols]
 
         # extract document identifiers from dedicated columns
-        id_columns = {"MOP_design", "MOP_test", "CAF_Comments"}
         for col in id_columns.intersection(df.columns):
+            raw_col = f"{col}_raw"
+            df[raw_col] = df[col]
             df[col] = (
                 df[col]
                 .fillna("")
@@ -216,13 +222,29 @@ class STIMatrixComparator:  # pylint: disable=too-few-public-methods
                 subset.rename(
                     columns={col1: "value_1", col2: "value_2"}, inplace=True
                 )
+                # format difference using raw text when available
+                col1_raw = f"{field}_raw_1"
+                col2_raw = f"{field}_raw_2"
+                if col1_raw in mism.columns and col2_raw in mism.columns:
+                    diff_series = (
+                        mism[col1_raw].fillna("").astype(str)
+                        + " -> "
+                        + mism[col2_raw].fillna("").astype(str)
+                    )
+                else:
+                    diff_series = (
+                        subset["value_1"].astype(str)
+                        + " -> "
+                        + subset["value_2"].astype(str)
+                    )
+                subset["Différence"] = diff_series
                 diffs.append(
-                    subset[["Reference", "field", "value_1", "value_2"]]
+                    subset[["Reference", "field", "value_1", "value_2", "Différence"]]
                 )
         if diffs:
             return pd.concat(diffs, ignore_index=True)
         return pd.DataFrame(
-            columns=["Reference", "field", "value_1", "value_2"]
+            columns=["Reference", "field", "value_1", "value_2", "Différence"]
         )
 
 
