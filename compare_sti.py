@@ -197,11 +197,10 @@ class STIMatrixComparator:  # pylint: disable=too-few-public-methods
             how="outer",
             suffixes=("_1", "_2"),
         )
-        canon = pd.DataFrame(index=merged.index)
-        for field in self.fields:
-            for suffix in ("_1", "_2"):
-                col = f"{field}{suffix}"
-                canon[col] = merged[col].map(self._canonical)
+        canon_columns = [
+            f"{field}_{suffix}" for field in self.fields for suffix in ("1", "2")
+        ]
+        canon = merged[canon_columns].map(self._canonical)
         # container for all mismatch rows
         diffs: List[pd.DataFrame] = []
 
