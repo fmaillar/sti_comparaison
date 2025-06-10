@@ -295,11 +295,20 @@ def main() -> None:
         print("No differences found")
     else:
         if args.output:
+            output_path = Path(args.output)
             # write results to an optional Excel file
-            diffs.to_excel(args.output, index=False)
-            print(f"Differences written to {args.output}")
+
+            try:
+                diffs.to_excel(output_path, index=False)
+            except ValueError as exc:
+                if "sheet is too large" in str(exc):
+                    output_path = output_path.with_suffix(".csv")
+                    diffs.to_csv(output_path, index=False)
+                else:
+                    raise  # pragma: no cover
+            print(f"Differences written to {output_path}")
         else:
-            print(diffs.to_string(index=False))
+          print(diffs.to_string(index=False))
 
     if args.ppd:
         # optionally verify that all MOP documents exist in the PPD file
