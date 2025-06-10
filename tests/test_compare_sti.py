@@ -410,44 +410,33 @@ def test_run_module(monkeypatch, tmp_path):
     runpy.run_module("compare_sti", run_name="__main__")
 
 
-def test_summarize_diffs():
-    diffs = pd.DataFrame(
+def test_summarise_differences():
+    df = pd.DataFrame(
         {
-            "Reference": [1, 2, 3],
-            "field": ["Requirement", "Requirement", "MOP_design"],
-            "value_1": ["A", pd.NA, {"X"}],
-            "value_2": ["B", "B", pd.NA],
+            "Reference": ["R1", "R2", "R3"],
+            "field": ["MOP_design", "MOP_design", "MOP_design"],
+            "value_1": [{"DID1"}, {"DID1"}, {"DID2"}],
+            "value_2": [{"DID2"}, {"DID2"}, {"DID3"}],
         }
     )
-    summary = cs.summarize_diffs(diffs, "A", "B")
-    assert len(summary) == 3
-    assert set(summary["Etat"]) == {"Différents", "Absent dans A", "Absent dans B"}
+    summary = cs.summarise_differences(df)
+    assert len(summary) == 2
+    first = summary.loc[summary["nb_references"] == 2].iloc[0]
+    assert first["Champ"] == "MOP_design"
+    assert first["État"] == "Différents"
+    assert first["Reference"] == ("R1", "R2")
+    assert "DID1" in first["Différence"] and "DID2" in first["Différence"]
 
 
-def test_summarize_diffs_empty():
-    df = pd.DataFrame(columns=["Reference", "field", "value_1", "value_2"])
-    result = cs.summarize_diffs(df, "A", "B")
-    assert result.empty
-
-
-def test_main_summary(monkeypatch, tmp_path):
-    path = make_config(tmp_path)
-
-    def fake_parse_args():
-        return SimpleNamespace(
-            matrix1="A",
-            matrix2="B",
-            config=str(path),
-            output=None,
-            ppd=None,
-            summary=True,
-        )
-
-    monkeypatch.setattr(cs.argparse.ArgumentParser, "parse_args", staticmethod(fake_parse_args))
-    monkeypatch.setattr(pd, "read_excel", lambda *a, **k: pd.DataFrame())
-    monkeypatch.setattr(cs.STIMatrix, "load", lambda self: pd.DataFrame({"Reference": [1], "Requirement": ["A"], "MOP_design": [set()] }))
-    monkeypatch.setattr(cs.STIMatrixComparator, "compare", lambda self, a, b: pd.DataFrame({"Reference": [1], "field": ["Requirement"], "value_1": ["A"], "value_2": ["B"]}))
-    out = []
-    monkeypatch.setattr(builtins, "print", lambda *a, **k: out.append(" ".join(map(str, a))))
-    cs.main()
-    assert any("Différents" in line for line in out)
+def test_summarise_differences_state():
+    df = pd.DataFrame(
+        {
+            "Reference": ["R1", "R2", "R3"],
+            "field": ["MOP_design", "MOP_design", "Requirement"],
+            "value_1": [set(), {"ID1"}, "A"],
+            "value_2": [{"ID1"}, set(), "B"],
+        }
+    )
+    summary = cs.summarise_differences(df)
+    states = set(summary["État"])
+    assert states == {"Absent dans GE", "Absent dans H2", "Différents"}
