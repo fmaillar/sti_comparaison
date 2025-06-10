@@ -1,3 +1,9 @@
+"""Tests for :mod:`compare_sti`."""
+
+# pylint: disable=missing-module-docstring,wrong-import-order,wrong-import-position,
+# pylint: disable=import-outside-toplevel,missing-function-docstring,unused-argument,
+# pylint: disable=protected-access,line-too-long,trailing-newlines
+
 import builtins
 from pathlib import Path
 from types import SimpleNamespace
@@ -230,11 +236,9 @@ def test_run_module(monkeypatch, tmp_path):
             output=None,
             ppd=None,
         )
-
     monkeypatch.setattr(cs.argparse.ArgumentParser, "parse_args", staticmethod(fake_parse_args))
     monkeypatch.setattr(pd, "read_excel", lambda *a, **k: pd.DataFrame())
     monkeypatch.setattr(pd.DataFrame, "to_excel", lambda *a, **k: None)
     monkeypatch.setattr(builtins, "print", lambda *a, **k: None)
     import runpy
     runpy.run_module("compare_sti", run_name="__main__")
-

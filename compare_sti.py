@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Set
+from typing import Any, Iterable, Set, List
 
 import re
 
@@ -20,7 +20,7 @@ import yaml
 
 # Regex pattern for document identifiers within STI columns
 ID_PATTERN = re.compile(
-    r"(?:DID[0-9]{10}|CMD[0-9]{6,}|PM[0-9]{6,}|" r"SETC[0-9]{6,})"
+    r"(?:DID[0-9]{10}|CMD[0-9]{6,}|PM[0-9]{6,}|SETC[0-9]{6,})"
 )
 
 
@@ -50,7 +50,7 @@ class STIConfig:
 
 
 @dataclass
-class STIMatrixDefinition:
+class STIMatrixDefinition:  # pylint: disable=too-few-public-methods
     """Definition of a single STI matrix extracted from the YAML config."""
 
     name: str
@@ -79,7 +79,7 @@ class STIMatrixDefinition:
         )
 
 
-class STIMatrix:
+class STIMatrix:  # pylint: disable=too-few-public-methods
     """Represent a STI matrix loaded from an Excel file."""
 
     def __init__(
@@ -134,7 +134,7 @@ class STIMatrix:
         return df
 
 
-class PPDChecker:
+class PPDChecker:  # pylint: disable=too-few-public-methods
     """Load a PPD Excel file and query its document identifiers."""
 
     def __init__(self, path: str, column: str = "Référence ALSTOM") -> None:
@@ -149,13 +149,15 @@ class PPDChecker:
         df = pd.read_excel(self.path)
         try:
             series = df[self.column]
-        except KeyError:
+        except KeyError as exc:
             # provide a clear error if the column is missing
-            raise KeyError(f"Column '{self.column}' not found in {self.path}")
+            raise KeyError(
+                f"Column '{self.column}' not found in {self.path}"
+            ) from exc
         return set(series.dropna().astype(str))
 
 
-class STIMatrixComparator:
+class STIMatrixComparator:  # pylint: disable=too-few-public-methods
     """Compare two :class:`STIMatrix` objects."""
 
     def __init__(self, fields: Iterable[str]) -> None:
@@ -196,7 +198,9 @@ class STIMatrixComparator:
             # rows where the two columns differ
             mism = merged[
                 ~merged.apply(
-                    lambda row: self._values_equal(row[col1], row[col2]),
+                    lambda row, c1=col1, c2=col2: self._values_equal(
+                        row[c1], row[c2]
+                    ),
                     axis=1,
                 )
             ]
