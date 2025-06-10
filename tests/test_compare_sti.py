@@ -241,6 +241,7 @@ def test_main(monkeypatch, tmp_path):
             config=str(path),
             output=None,
             ppd=None,
+            summary=False,
         )
 
     fake_df = pd.DataFrame({})
@@ -267,6 +268,7 @@ def test_main_output_and_ppd(monkeypatch, tmp_path):
             config=str(path),
             output=str(output),
             ppd=str(tmp_path / "ppd.xlsx"),
+            summary=False,
         )
 
     monkeypatch.setattr(pd, "read_excel", lambda *a, **k: ids_df)
@@ -294,6 +296,7 @@ def test_main_output_too_large(monkeypatch, tmp_path):
             config=str(path),
             output=str(output),
             ppd=None,
+            summary=False,
         )
 
     # ignore file loading
@@ -374,6 +377,7 @@ def test_main_missing_ppd(monkeypatch, tmp_path):
             config=str(path),
             output=None,
             ppd=str(tmp_path / "ppd.xlsx"),
+            summary=False,
         )
 
     monkeypatch.setattr(pd, "read_excel", lambda *a, **k: ids_df)
@@ -396,6 +400,7 @@ def test_run_module(monkeypatch, tmp_path):
             config=str(path),
             output=None,
             ppd=None,
+            summary=False,
         )
     monkeypatch.setattr(cs.argparse.ArgumentParser, "parse_args", staticmethod(fake_parse_args))
     monkeypatch.setattr(pd, "read_excel", lambda *a, **k: pd.DataFrame())
@@ -403,3 +408,46 @@ def test_run_module(monkeypatch, tmp_path):
     monkeypatch.setattr(builtins, "print", lambda *a, **k: None)
     import runpy
     runpy.run_module("compare_sti", run_name="__main__")
+
+
+def test_summarize_diffs():
+    diffs = pd.DataFrame(
+        {
+            "Reference": [1, 2, 3],
+            "field": ["Requirement", "Requirement", "MOP_design"],
+            "value_1": ["A", pd.NA, {"X"}],
+            "value_2": ["B", "B", pd.NA],
+        }
+    )
+    summary = cs.summarize_diffs(diffs, "A", "B")
+    assert len(summary) == 3
+    assert set(summary["Etat"]) == {"Différents", "Absent dans A", "Absent dans B"}
+
+
+def test_summarize_diffs_empty():
+    df = pd.DataFrame(columns=["Reference", "field", "value_1", "value_2"])
+    result = cs.summarize_diffs(df, "A", "B")
+    assert result.empty
+
+
+def test_main_summary(monkeypatch, tmp_path):
+    path = make_config(tmp_path)
+
+    def fake_parse_args():
+        return SimpleNamespace(
+            matrix1="A",
+            matrix2="B",
+            config=str(path),
+            output=None,
+            ppd=None,
+            summary=True,
+        )
+
+    monkeypatch.setattr(cs.argparse.ArgumentParser, "parse_args", staticmethod(fake_parse_args))
+    monkeypatch.setattr(pd, "read_excel", lambda *a, **k: pd.DataFrame())
+    monkeypatch.setattr(cs.STIMatrix, "load", lambda self: pd.DataFrame({"Reference": [1], "Requirement": ["A"], "MOP_design": [set()] }))
+    monkeypatch.setattr(cs.STIMatrixComparator, "compare", lambda self, a, b: pd.DataFrame({"Reference": [1], "field": ["Requirement"], "value_1": ["A"], "value_2": ["B"]}))
+    out = []
+    monkeypatch.setattr(builtins, "print", lambda *a, **k: out.append(" ".join(map(str, a))))
+    cs.main()
+    assert any("Différents" in line for line in out)
