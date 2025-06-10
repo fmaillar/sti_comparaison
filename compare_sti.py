@@ -294,11 +294,12 @@ def main() -> None:
     if diffs.empty:
         print("No differences found")
     else:
-        print(diffs.to_string(index=False))
         if args.output:
             # write results to an optional Excel file
             diffs.to_excel(args.output, index=False)
             print(f"Differences written to {args.output}")
+        else:
+            print(diffs.to_string(index=False))
 
     if args.ppd:
         # optionally verify that all MOP documents exist in the PPD file
