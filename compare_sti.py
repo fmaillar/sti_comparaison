@@ -58,6 +58,7 @@ class STIMatrixDefinition:  # pylint: disable=too-few-public-methods
     sti_sheet: str
     column_mapping: dict[str, str]
     header_row: int | None
+    base_dir: Path = Path(".")
 
     @classmethod
     def from_config(
@@ -76,6 +77,7 @@ class STIMatrixDefinition:  # pylint: disable=too-few-public-methods
             sti_sheet=sheet_name,
             column_mapping=raw.get("column_mapping", {}),
             header_row=header_info.get("header_row"),
+            base_dir=Path(config.path).resolve().parent,
         )
 
 
@@ -97,6 +99,13 @@ class STIMatrix:  # pylint: disable=too-few-public-methods
         """Load the Excel file and normalise its columns."""
 
         file_path = Path(self.definition.file)
+        if not file_path.is_absolute():
+            file_path = self.definition.base_dir / file_path
+        resolved = file_path.resolve()
+        base = self.definition.base_dir.resolve()
+        if base not in resolved.parents and resolved != base:
+            raise ValueError(f"Matrix file {resolved} is outside of {base}")
+        file_path = resolved
         header = (
             self.definition.header_row
             if self.definition.header_row is not None
