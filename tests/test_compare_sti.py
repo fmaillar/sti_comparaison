@@ -202,6 +202,53 @@ def test_main_output_and_ppd(monkeypatch, tmp_path):
     assert any("Differences written" in line for line in out)
 
 
+def test_main_output_too_large(monkeypatch, tmp_path):
+    path = make_config(tmp_path)
+    output = tmp_path / "out.xlsx"
+
+    def fake_parse_args():
+        return SimpleNamespace(
+            matrix1="A",
+            matrix2="B",
+            config=str(path),
+            output=str(output),
+            ppd=None,
+        )
+
+    # ignore file loading
+    monkeypatch.setattr(pd, "read_excel", lambda *a, **k: pd.DataFrame())
+    monkeypatch.setattr(
+        cs.STIMatrix,
+        "load",
+        lambda self: pd.DataFrame({"Reference": [1], "Requirement": ["A"]}),
+    )
+    monkeypatch.setattr(
+        cs.STIMatrixComparator,
+        "compare",
+        lambda self, a, b: pd.DataFrame(
+            {"Reference": [1], "field": ["Requirement"], "value_1": ["A"], "value_2": ["B"]}
+        ),
+    )
+
+    def fake_to_excel(self, *a, **k):
+        raise ValueError("This sheet is too large!")
+
+    path_holder = {}
+
+    def fake_to_csv(self, path, index=False):
+        path_holder["path"] = path
+
+    monkeypatch.setattr(pd.DataFrame, "to_excel", fake_to_excel)
+    monkeypatch.setattr(pd.DataFrame, "to_csv", fake_to_csv)
+    monkeypatch.setattr(cs.argparse.ArgumentParser, "parse_args", staticmethod(fake_parse_args))
+
+    out = []
+    monkeypatch.setattr(builtins, "print", lambda *a, **k: out.append(" ".join(map(str, a))))
+    cs.main()
+    assert path_holder["path"] == output.with_suffix(".csv")
+    assert any("Differences written" in line for line in out)
+
+
 def test_main_missing_ppd(monkeypatch, tmp_path):
     path = make_config(tmp_path)
     ids_df = pd.DataFrame({"Référence ALSTOM": []})
