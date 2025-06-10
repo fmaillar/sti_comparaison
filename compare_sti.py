@@ -244,6 +244,58 @@ def collect_document_ids(df: pd.DataFrame, columns: Iterable[str]) -> Set[str]:
     return ids
 
 
+def summarize_diffs(
+    diffs: pd.DataFrame, matrix1_name: str, matrix2_name: str
+) -> pd.DataFrame:
+    """Return a grouped summary of ``diffs``.
+
+    Differences are grouped by field and values and the list of references is
+    aggregated. Additional helper columns describe the difference type and
+    count how many references belong to each group.
+    """
+
+    if diffs.empty:
+        return diffs.copy()
+
+    def _canonical(value: Any):
+        if isinstance(value, set):
+            return tuple(sorted(value))
+        return value
+
+    def _format(value: Any) -> str:
+        if isinstance(value, tuple):
+            return ", ".join(map(str, value))
+        if pd.isna(value):
+            return ""
+        return str(value)
+
+    tmp = diffs.copy()
+    tmp["_v1"] = tmp["value_1"].map(_canonical)
+    tmp["_v2"] = tmp["value_2"].map(_canonical)
+    grouped = (
+        tmp.groupby(["field", "_v1", "_v2"], dropna=False)["Reference"]
+        .agg(list)
+        .reset_index()
+    )
+    grouped["nb_references"] = grouped["Reference"].apply(len)
+
+    def _state(row: pd.Series) -> str:
+        v1_missing = pd.isna(row["_v1"])
+        v2_missing = pd.isna(row["_v2"])
+        if v1_missing and not v2_missing:
+            return f"Absent dans {matrix1_name}"
+        if v2_missing and not v1_missing:
+            return f"Absent dans {matrix2_name}"
+        return "Différents"
+
+    grouped["Etat"] = grouped.apply(_state, axis=1)
+    grouped["Différence"] = grouped.apply(
+        lambda r: f"{_format(r['_v1'])} / {_format(r['_v2'])}", axis=1
+    )
+    grouped.rename(columns={"_v1": "value_1", "_v2": "value_2"}, inplace=True)
+    return grouped
+
+
 def main() -> None:
     """Entry point for the command line interface."""
 
@@ -273,6 +325,11 @@ def main() -> None:
         "--ppd",
         help="Optional PPD Excel file to verify documents",
     )
+    parser.add_argument(
+        "--summary",
+        action="store_true",
+        help="Display a grouped summary of the differences",
+    )
 
     # parse command line arguments
     args = parser.parse_args()
@@ -291,7 +348,11 @@ def main() -> None:
     comparator = STIMatrixComparator(fields)
     diffs = comparator.compare(df1, df2)
 
-    if diffs.empty:
+    result_df = diffs
+    if args.summary:
+        result_df = summarize_diffs(diffs, args.matrix1, args.matrix2)
+
+    if result_df.empty:
         print("No differences found")
     else:
         if args.output:
@@ -299,16 +360,16 @@ def main() -> None:
             # write results to an optional Excel file
 
             try:
-                diffs.to_excel(output_path, index=False)
+                result_df.to_excel(output_path, index=False)
             except ValueError as exc:
                 if "sheet is too large" in str(exc):
                     output_path = output_path.with_suffix(".csv")
-                    diffs.to_csv(output_path, index=False)
+                    result_df.to_csv(output_path, index=False)
                 else:
                     raise  # pragma: no cover
             print(f"Differences written to {output_path}")
         else:
-          print(diffs.to_string(index=False))
+            print(result_df.to_string(index=False))
 
     if args.ppd:
         # optionally verify that all MOP documents exist in the PPD file
