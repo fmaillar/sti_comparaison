@@ -289,3 +289,35 @@ def test_run_module(monkeypatch, tmp_path):
     monkeypatch.setattr(builtins, "print", lambda *a, **k: None)
     import runpy
     runpy.run_module("compare_sti", run_name="__main__")
+
+
+def test_summarise_differences():
+    df = pd.DataFrame(
+        {
+            "Reference": ["R1", "R2", "R3"],
+            "field": ["MOP_design", "MOP_design", "MOP_design"],
+            "value_1": [{"DID1"}, {"DID1"}, {"DID2"}],
+            "value_2": [{"DID2"}, {"DID2"}, {"DID3"}],
+        }
+    )
+    summary = cs.summarise_differences(df)
+    assert len(summary) == 2
+    first = summary.loc[summary["nb_references"] == 2].iloc[0]
+    assert first["Champ"] == "MOP_design"
+    assert first["État"] == "Différents"
+    assert first["Reference"] == ("R1", "R2")
+    assert "DID1" in first["Différence"] and "DID2" in first["Différence"]
+
+
+def test_summarise_differences_state():
+    df = pd.DataFrame(
+        {
+            "Reference": ["R1", "R2", "R3"],
+            "field": ["MOP_design", "MOP_design", "Requirement"],
+            "value_1": [set(), {"ID1"}, "A"],
+            "value_2": [{"ID1"}, set(), "B"],
+        }
+    )
+    summary = cs.summarise_differences(df)
+    states = set(summary["État"])
+    assert states == {"Absent dans GE", "Absent dans H2", "Différents"}

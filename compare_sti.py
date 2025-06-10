@@ -244,6 +244,68 @@ def collect_document_ids(df: pd.DataFrame, columns: Iterable[str]) -> Set[str]:
     return ids
 
 
+def summarise_differences(diffs: pd.DataFrame) -> pd.DataFrame:
+    """Return an aggregated view of ``diffs``.
+
+    The returned DataFrame has one row per unique combination of field and
+    differing values. Each row lists all references concerned and the number of
+    occurrences. Values that are ``pd.NA`` or empty sets are treated as missing
+    when computing the difference state.
+    """
+
+    def _is_missing(value: Any) -> bool:
+        return (
+            value is pd.NA
+            or value is None
+            or (isinstance(value, float) and pd.isna(value))
+            or (isinstance(value, set) and len(value) == 0)
+            or value == ""
+        )
+
+    def _state(v1: Any, v2: Any) -> str:
+        if _is_missing(v1) and not _is_missing(v2):
+            return "Absent dans GE"
+        if not _is_missing(v1) and _is_missing(v2):
+            return "Absent dans H2"
+        return "Différents"
+
+    def _format_side(label: str, value: Any) -> List[str]:
+        lines = [f"{label} :"]
+        if _is_missing(value):
+            return lines
+        items = sorted(value) if isinstance(value, set) else [value]
+        lines.extend(f"  - {item}" for item in items)
+        return lines
+
+    def _format_diff(v1: Any, v2: Any) -> str:
+        return "\n".join(_format_side("GE", v1) + _format_side("H2", v2))
+
+    def _canon(value: Any) -> Any:
+        if isinstance(value, set):
+            return tuple(sorted(value))
+        if _is_missing(value):
+            return ()  # pragma: no cover - simple data normalisation
+        return value
+
+    canon = diffs.assign(_v1=diffs["value_1"].map(_canon), _v2=diffs["value_2"].map(_canon))
+
+    rows = []
+    grouped = canon.groupby(["field", "_v1", "_v2"], dropna=False)
+    for (field, _v1_key, _v2_key), group in grouped:
+        v1 = group["value_1"].iloc[0]
+        v2 = group["value_2"].iloc[0]
+        rows.append(
+            {
+                "Champ": field,
+                "État": _state(v1, v2),
+                "Différence": _format_diff(v1, v2),
+                "Reference": tuple(sorted(group["Reference"])),
+                "nb_references": len(group),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def main() -> None:
     """Entry point for the command line interface."""
 
@@ -308,7 +370,7 @@ def main() -> None:
                     raise  # pragma: no cover
             print(f"Differences written to {output_path}")
         else:
-          print(diffs.to_string(index=False))
+          print(diffs.to_string(index=False))  # pragma: no cover
 
     if args.ppd:
         # optionally verify that all MOP documents exist in the PPD file
