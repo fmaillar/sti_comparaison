@@ -178,6 +178,14 @@ class STIMatrixComparator:  # pylint: disable=too-few-public-methods
             return True
         return str(a) == str(b)
 
+    def _canonical(self, value: Any):
+        """Return a normalised representation of ``value`` for comparison."""
+        if isinstance(value, set):
+            return tuple(sorted(value))
+        if pd.isna(value):
+            return ()
+        return str(value)
+
     def compare(self, df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
         """Return a DataFrame describing the differences between ``df1`` and
         ``df2``."""
@@ -196,14 +204,11 @@ class STIMatrixComparator:  # pylint: disable=too-few-public-methods
             col1 = f"{field}_1"
             col2 = f"{field}_2"
             # rows where the two columns differ
-            mism = merged[
-                ~merged.apply(
-                    lambda row, c1=col1, c2=col2: self._values_equal(
-                        row[c1], row[c2]
-                    ),
-                    axis=1,
-                )
-            ]
+            mask = (
+                merged[col1].map(self._canonical)
+                != merged[col2].map(self._canonical)
+            )
+            mism = merged[mask]
             if not mism.empty:
                 subset = mism[["Reference", col1, col2]].copy()
                 subset["field"] = field
