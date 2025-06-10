@@ -71,8 +71,14 @@ def test_sti_matrix_load(tmp_path, monkeypatch):
     monkeypatch.setattr(pd, "read_excel", fake_read_excel)
     matrix = cs.STIMatrix(defn, cfg.fields_to_compare)
     df = matrix.load()
-    assert set(df.columns) == {"Reference", "Requirement", "MOP_design"}
+    assert set(df.columns) == {
+        "Reference",
+        "Requirement",
+        "MOP_design",
+        "MOP_design_raw",
+    }
     assert df.loc[0, "MOP_design"] == {"DID1234567890"}
+    assert df.loc[0, "MOP_design_raw"] == "blah DID1234567890"
 
 
 def test_sti_matrix_load_missing_column(tmp_path, monkeypatch):
@@ -89,6 +95,39 @@ def test_sti_matrix_load_missing_column(tmp_path, monkeypatch):
     df = matrix.load()
     # Missing column should be filled with NA
     assert df.loc[0, "MOP_design"] == set()
+    assert pd.isna(df.loc[0, "MOP_design_raw"])
+
+
+def test_sti_matrix_load_relative_path(tmp_path, monkeypatch):
+    path = make_config(tmp_path)
+    cfg_dict = yaml.safe_load(path.read_text())
+    cfg_dict["matrices"][0]["file"] = "sub/a.xlsx"
+    path.write_text(yaml.dump(cfg_dict))
+    cfg = cs.STIConfig(str(path))
+    defn = cs.STIMatrixDefinition.from_config(cfg, "A")
+
+    expected = defn.base_dir / "sub/a.xlsx"
+
+    def fake_read_excel(pth, *args, **kwargs):
+        assert Path(pth) == expected.resolve()
+        return pd.DataFrame({"A": [1], "B": ["req"], "C": [""]})
+
+    monkeypatch.setattr(pd, "read_excel", fake_read_excel)
+    matrix = cs.STIMatrix(defn, cfg.fields_to_compare)
+    matrix.load()
+
+
+def test_sti_matrix_load_outside_base_dir(tmp_path, monkeypatch):
+    path = make_config(tmp_path)
+    cfg_dict = yaml.safe_load(path.read_text())
+    cfg_dict["matrices"][0]["file"] = str(tmp_path.parent / "evil.xlsx")
+    path.write_text(yaml.dump(cfg_dict))
+    cfg = cs.STIConfig(str(path))
+    defn = cs.STIMatrixDefinition.from_config(cfg, "A")
+    monkeypatch.setattr(pd, "read_excel", lambda *a, **k: pd.DataFrame())
+    matrix = cs.STIMatrix(defn, cfg.fields_to_compare)
+    with pytest.raises(ValueError):
+        matrix.load()
 
 
 def test_ppd_checker(monkeypatch, tmp_path):
@@ -137,6 +176,22 @@ def test_compare():
     assert len(diffs) == 3
 
 
+def test_compare_raw_difference():
+    cmp = cs.STIMatrixComparator(["MOP_design"])
+    df1 = pd.DataFrame({
+        "Reference": [1],
+        "MOP_design": [{"ID1"}],
+        "MOP_design_raw": ["a ID1"],
+    })
+    df2 = pd.DataFrame({
+        "Reference": [1],
+        "MOP_design": [{"ID2"}],
+        "MOP_design_raw": ["b ID2"],
+    })
+    diffs = cmp.compare(df1, df2)
+    assert diffs.loc[0, "Différence"] == "a ID1 -> b ID2"
+
+
 def test_compare_no_difference():
     cmp = cs.STIMatrixComparator(["Requirement"])
     df = pd.DataFrame({"Reference": [1], "Requirement": ["A"]})
@@ -150,6 +205,32 @@ def test_collect_document_ids():
     assert ids == {"X", "Y"}
 
 
+def test_main_print_diffs(monkeypatch, tmp_path):
+    path = make_config(tmp_path)
+
+    def fake_parse_args():
+        return SimpleNamespace(
+            matrix1="A",
+            matrix2="B",
+            config=str(path),
+            output=None,
+            ppd=None,
+        )
+
+    diff_df = pd.DataFrame(
+        {"Reference": [1], "field": ["Requirement"], "value_1": ["A"], "value_2": ["B"]}
+    )
+
+    monkeypatch.setattr(cs.argparse.ArgumentParser, "parse_args", staticmethod(fake_parse_args))
+    monkeypatch.setattr(cs.STIMatrix, "load", lambda self: pd.DataFrame())
+    monkeypatch.setattr(cs.STIMatrixComparator, "compare", lambda self, a, b: diff_df)
+
+    out = []
+    monkeypatch.setattr(builtins, "print", lambda *a, **k: out.append(" ".join(map(str, a))))
+    cs.main()
+    assert any("Reference" in line for line in out)
+
+
 def test_main(monkeypatch, tmp_path):
     path = make_config(tmp_path)
 
@@ -160,6 +241,7 @@ def test_main(monkeypatch, tmp_path):
             config=str(path),
             output=None,
             ppd=None,
+            summary=False,
         )
 
     fake_df = pd.DataFrame({})
@@ -186,6 +268,7 @@ def test_main_output_and_ppd(monkeypatch, tmp_path):
             config=str(path),
             output=str(output),
             ppd=str(tmp_path / "ppd.xlsx"),
+            summary=False,
         )
 
     monkeypatch.setattr(pd, "read_excel", lambda *a, **k: ids_df)
@@ -213,6 +296,7 @@ def test_main_output_too_large(monkeypatch, tmp_path):
             config=str(path),
             output=str(output),
             ppd=None,
+            summary=False,
         )
 
     # ignore file loading
@@ -249,6 +333,39 @@ def test_main_output_too_large(monkeypatch, tmp_path):
     assert any("Differences written" in line for line in out)
 
 
+def test_main_prints_differences(monkeypatch, tmp_path):
+    path = make_config(tmp_path)
+
+    def fake_parse_args():
+        return SimpleNamespace(
+            matrix1="A",
+            matrix2="B",
+            config=str(path),
+            output=None,
+            ppd=None,
+        )
+
+    monkeypatch.setattr(cs.argparse.ArgumentParser, "parse_args", staticmethod(fake_parse_args))
+    monkeypatch.setattr(pd, "read_excel", lambda *a, **k: pd.DataFrame())
+    monkeypatch.setattr(cs.STIMatrix, "load", lambda self: pd.DataFrame({"Reference": [1]}))
+    monkeypatch.setattr(
+        cs.STIMatrixComparator,
+        "compare",
+        lambda self, a, b: pd.DataFrame({
+            "Reference": [1],
+            "field": ["Requirement"],
+            "value_1": ["A"],
+            "value_2": ["B"],
+            "Différence": ["A -> B"],
+        }),
+    )
+
+    out = []
+    monkeypatch.setattr(builtins, "print", lambda *a, **k: out.append(" ".join(map(str, a))))
+    cs.main()
+    assert any("A -> B" in line for line in out)
+
+
 def test_main_missing_ppd(monkeypatch, tmp_path):
     path = make_config(tmp_path)
     ids_df = pd.DataFrame({"Référence ALSTOM": []})
@@ -260,6 +377,7 @@ def test_main_missing_ppd(monkeypatch, tmp_path):
             config=str(path),
             output=None,
             ppd=str(tmp_path / "ppd.xlsx"),
+            summary=False,
         )
 
     monkeypatch.setattr(pd, "read_excel", lambda *a, **k: ids_df)
@@ -282,6 +400,7 @@ def test_run_module(monkeypatch, tmp_path):
             config=str(path),
             output=None,
             ppd=None,
+            summary=False,
         )
     monkeypatch.setattr(cs.argparse.ArgumentParser, "parse_args", staticmethod(fake_parse_args))
     monkeypatch.setattr(pd, "read_excel", lambda *a, **k: pd.DataFrame())

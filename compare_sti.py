@@ -58,6 +58,7 @@ class STIMatrixDefinition:  # pylint: disable=too-few-public-methods
     sti_sheet: str
     column_mapping: dict[str, str]
     header_row: int | None
+    base_dir: Path = Path(".")
 
     @classmethod
     def from_config(
@@ -76,6 +77,7 @@ class STIMatrixDefinition:  # pylint: disable=too-few-public-methods
             sti_sheet=sheet_name,
             column_mapping=raw.get("column_mapping", {}),
             header_row=header_info.get("header_row"),
+            base_dir=Path(config.path).resolve().parent,
         )
 
 
@@ -97,6 +99,13 @@ class STIMatrix:  # pylint: disable=too-few-public-methods
         """Load the Excel file and normalise its columns."""
 
         file_path = Path(self.definition.file)
+        if not file_path.is_absolute():
+            file_path = self.definition.base_dir / file_path
+        resolved = file_path.resolve()
+        base = self.definition.base_dir.resolve()
+        if base not in resolved.parents and resolved != base:
+            raise ValueError(f"Matrix file {resolved} is outside of {base}")
+        file_path = resolved
         header = (
             self.definition.header_row
             if self.definition.header_row is not None
@@ -111,19 +120,25 @@ class STIMatrix:  # pylint: disable=too-few-public-methods
         # normalise column names using the mapping from the configuration
         df.rename(columns=self.definition.column_mapping, inplace=True)
 
-        # ensure all expected columns exist
+        # ensure all expected columns exist and create raw columns for ID fields
         required = ["Reference"] + self.fields
+        id_columns = {"MOP_design", "MOP_test", "CAF_Comments"}
+        raw_cols: list[str] = []
         for col in required:
-            try:
-                df[col]
-            except KeyError:
+            if col not in df.columns:
                 df[col] = pd.NA
+            if col in id_columns:
+                raw_col = f"{col}_raw"
+                raw_cols.append(raw_col)
+                if raw_col not in df.columns:
+                    df[raw_col] = pd.NA
 
-        df = df[required]
+        df = df[required + raw_cols]
 
         # extract document identifiers from dedicated columns
-        id_columns = {"MOP_design", "MOP_test", "CAF_Comments"}
         for col in id_columns.intersection(df.columns):
+            raw_col = f"{col}_raw"
+            df[raw_col] = df[col]
             df[col] = (
                 df[col]
                 .fillna("")
@@ -216,13 +231,29 @@ class STIMatrixComparator:  # pylint: disable=too-few-public-methods
                 subset.rename(
                     columns={col1: "value_1", col2: "value_2"}, inplace=True
                 )
+                # format difference using raw text when available
+                col1_raw = f"{field}_raw_1"
+                col2_raw = f"{field}_raw_2"
+                if col1_raw in mism.columns and col2_raw in mism.columns:
+                    diff_series = (
+                        mism[col1_raw].fillna("").astype(str)
+                        + " -> "
+                        + mism[col2_raw].fillna("").astype(str)
+                    )
+                else:
+                    diff_series = (
+                        subset["value_1"].astype(str)
+                        + " -> "
+                        + subset["value_2"].astype(str)
+                    )
+                subset["Différence"] = diff_series
                 diffs.append(
-                    subset[["Reference", "field", "value_1", "value_2"]]
+                    subset[["Reference", "field", "value_1", "value_2", "Différence"]]
                 )
         if diffs:
             return pd.concat(diffs, ignore_index=True)
         return pd.DataFrame(
-            columns=["Reference", "field", "value_1", "value_2"]
+            columns=["Reference", "field", "value_1", "value_2", "Différence"]
         )
 
 
@@ -335,6 +366,11 @@ def main() -> None:
         "--ppd",
         help="Optional PPD Excel file to verify documents",
     )
+    parser.add_argument(
+        "--summary",
+        action="store_true",
+        help="Display a grouped summary of the differences",
+    )
 
     # parse command line arguments
     args = parser.parse_args()
@@ -353,7 +389,11 @@ def main() -> None:
     comparator = STIMatrixComparator(fields)
     diffs = comparator.compare(df1, df2)
 
-    if diffs.empty:
+    result_df = diffs
+    if args.summary:
+        result_df = summarize_diffs(diffs, args.matrix1, args.matrix2)
+
+    if result_df.empty:
         print("No differences found")
     else:
         if args.output:
@@ -361,16 +401,17 @@ def main() -> None:
             # write results to an optional Excel file
 
             try:
-                diffs.to_excel(output_path, index=False)
+                result_df.to_excel(output_path, index=False)
             except ValueError as exc:
                 if "sheet is too large" in str(exc):
                     output_path = output_path.with_suffix(".csv")
-                    diffs.to_csv(output_path, index=False)
+                    result_df.to_csv(output_path, index=False)
                 else:
                     raise  # pragma: no cover
             print(f"Differences written to {output_path}")
         else:
           print(diffs.to_string(index=False))  # pragma: no cover
+
 
     if args.ppd:
         # optionally verify that all MOP documents exist in the PPD file
